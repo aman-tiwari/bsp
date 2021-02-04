@@ -16,7 +16,36 @@ from edges import raster_edges
 from centerline.geometry import Centerline
 from shapely import ops
 import tqdm
+from shapely.geometry import mapping, shape
+
+from multiprocessing import freeze_support, Pool
+
+
+
+def fn_c(p):
+    p = shape(p)
+    cls = Centerline(p, valid=True)
+    cls = ops.linemerge(geom.MultiLineString(cls.geoms))
+    return mapping(cls)
+
 def extract_centerlines(shapes):
+    shapes = (shape.buffer(0) for shape in shapes)
+    polys = [poly for poly in shapes if type(poly) == geom.Polygon and type(poly.envelope) == geom.Polygon]
+    pms = [mapping(p) for p in polys]
+    with Pool(5) as pool:
+        centerlines = pool.map(fn_c, pms)
+    #centerlines = [fn_c(p) for p in pms]
+    centerlines = [shape(p) for p in centerlines]
+
+    #centerlines = [shape(fn_(mapping(p))) for p in polys]
+
+    #center_geoms = [line.geoms for line in centerlines]
+    #center_geom_lines = [geom.MultiLineString(line) for line in center_geoms]
+    #center_geom_lines = [ops.linemerge(line) for line in center_geom_lines]
+    #return center_geom_lines
+    return centerlines
+
+def old_extract_centerlines(shapes):
     shapes = (shape.buffer(0) for shape in shapes)
     polys = [poly for poly in shapes if type(poly) == geom.Polygon and type(poly.envelope) == geom.Polygon]
     centerlines = [Centerline(p, valid=True) for p in polys]
