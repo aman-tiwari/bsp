@@ -1,4 +1,4 @@
-from cld_mst import rgb2line_steiner
+from cld_steiner import rgb2line_steiner
 from PIL import Image
 from argparse import ArgumentParser
 from multiprocessing import freeze_support
@@ -15,7 +15,14 @@ opts = args.parse_args()
 
 img = Image.open(opts.i)
 t0 = time()
-lines = rgb2line_steiner(img)
+for i in range(1):
+    lines = rgb2line_steiner(img)
+
+print(lines.keys())
+import json
+with open(opts.o, 'w') as f:
+    f.write(json.dumps(lines))
+    
 t1 = time()
-print("took:", t1 - t0, "s")
+print("took:", (t1 - t0)/10.0, "s")
 
